@@ -1,10 +1,9 @@
+from __future__ import annotations
+from typing import Protocol
+from chess import Move
+from .game import ChessGame
+
 class Player:
-    """
-    Base class for anything that can choose a move:
-    - human (via CLI or GUI)
-    - random agent
-    - neural net agent
-    - search agent
-    """
-    def choose_move(self, game):
+    """Base class for anything that can choose a move."""
+    def choose_move(self, game: ChessGame) -> Move | None:
         raise NotImplementedError
