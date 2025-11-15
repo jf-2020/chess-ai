@@ -13,7 +13,7 @@ class ChessGame:
         """Return a list of legal moves from the current position."""
         return list(self.board.legal_moves)
     
-    def apply_move(self, move: chess.Move) - > None:
+    def apply_move(self, move: chess.Move) -> None:
         """Apply a move to the current board."""
         self.board.push(move)
 
