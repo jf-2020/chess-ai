@@ -21,17 +21,17 @@ class ChessGame:
     def result(self):
         return self.board.result()
     
-    class GameSession:
-        """Orchestrates a full game between two players."""
+class GameSession:
+    """Orchestrates a full game between two players."""
 
-        def __init__(self, white_player, black_player, game=None):
-            self.game = game or ChessGame()
-            self.white_player = white_player
-            self.black_player = black_player
+    def __init__(self, white_player, black_player, game=None):
+        self.game = game or ChessGame()
+        self.white_player = white_player
+        self.black_player = black_player
 
-        def current_player(self):
-            return self.white_player if self.game.board.turn else self.black_player
-        
-        def run(self):
-            # loop until game over, calling player.choose_move(self.game)
-            pass
+    def current_player(self):
+        return self.white_player if self.game.board.turn else self.black_player
+    
+    def run(self):
+        # loop until game over, calling player.choose_move(self.game)
+        pass
