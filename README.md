@@ -1,44 +1,75 @@
-# Chess AI
+# chess-ai
 
-A multi-phase AI project to build a chess engine with a command-line interface and eventually a set of neural-network driven AIs of varying type.
+A small research sandbox for building AI chess agents. Right now it provides a basic command line interface, human vs random AI play, game saving and replay. Neural net & search agents will come next.
 
-While the goal of the project is the chess AI, it's also an attempt to complete a full "end-to-end" AI project (because it's not *just* about the math).
 
----
+## Running the Game
 
-### Goal 0: Scaffolding
+First activate your virtual environment. Then, to play **human** vs **random**, run:
 
-- Established project structure.
-- Separated code into clear domains:
-  - `core/` - game logic & abstractions
-  - `agents/` - AI implementations
-  - `cli/` - command-line interface & human interaction
+`python -m chess_ai play`
 
----
+You'll see an ASCII chessboard updated each time it is your turn. Example output is below:
 
-### Goal 1: Core Game Logic & Player Abstractions
+|   |   |   |   |   |   |   |   |
+|---|---|---|---|---|---|---|---|
+| r | n | b | q | k | b | n | r |
+| p | p | p | p | p | p | p | p |
+| . | . | . | . | . | . | . | . |
+| . | . | . | . | . | . | . | . |
+| . | . | . | . | P | . | . | . |
+| . | . | . | . | . | . | . | . |
+| P | P | P | P | P | P | P | P |
+| R | N | B | Q | K | B | N | R |
 
-- Implemented `ChessGame`, a wrapper around **python-chess**, providing:
-  - board state
-  - move generation & application
-  - game state checks
-  - result handling
-- Implemented `Player`, a base class for anything that can move.
-- Added the first AI, `RandomAgent`.
-- Implemented `GameSession`, the game loop that:
-  - alternates turns based on board state
-  - requests moves from each player
-  - applies moves to the shared `ChessGame`
-  - handles resignation/quit cases
-  - returns a final chess result string (`"1-0"`, `"0-1"`, `"1/2-1/2"`)
-- Added first automated test confirming random-vs-random completes successfully.
+**Legend**: White = uppercase, Black = lowercase.
 
----
+Enter your moves in **UCI format**, such as:
 
-### Goal 2: NEXT STEPS
+1.`e2e4`
+2.`g1f3`
+3.`a7a5`
 
-- Implement CLI interaction:
-  - ASCII board rendering
-  - `HumanPlayer` input parsing (UCI)
-  - a runnable `human vs random` command
-- After that: state encoding & initial neural network model
+Note that while **UCI** is universally recognized, if it doesn't appear normal to you, it's *OK* to think of it in the usual algebraic notation.
+
+And to resign, enter `q`.
+
+
+## Saving the Game
+
+Every completed game is saved automatically in:
+
+`games/`
+
+With file naming following the convention:
+
+`YYYYMMDD_HHMMSS_game.pgn`
+
+These are standard PGN files compatible with any (universal) chess software.
+
+
+## Replaying a Game
+
+To replay a saved PGN:
+
+`python -m chess_ai replay path/to/game.pgn`
+
+Press **Enter** to advance one move at a time.  
+Press **q** during replay to exit early.
+
+You'll see the board update after each move.
+
+
+# DEV UPDATE LOG
+
+### 0. Base engine and project structure
+Created initial package layout, `ChessGame`, `GameSession`, and core architecture.
+
+### 1. CLI play loop
+Added `HumanPlayer`, input parsing, ASCII board rendering, and a minimal random agent.
+
+### 2. PGN save + replay
+Implemented automatic PGN saving and step-by-step PGN replay.
+
+### 3. CLI entrypoint + cleanup
+Added `__main__.py` for simple commands (`python -m chess_ai`), simplified dispatch, and tightened tests.
