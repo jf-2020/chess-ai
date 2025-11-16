@@ -4,12 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chess-ai"
-version = "0.0.1"
+version = "0.1.0"
 description = "Research sandbox for chess-playing AI agents."
 requires-python = ">=3.11"
 
 dependencies = [
     "python-chess",
+    "Flask>=3.0",
 ]
 
 [project.optional-dependencies]
