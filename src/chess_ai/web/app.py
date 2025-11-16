@@ -35,22 +35,44 @@ PAGE_TEMPLATE = """
   <head>
     <meta charset="utf-8">
     <title>chess-ai!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   </head>
   <body>
-    <h1>chess-ai!</h1>
+    <div class="wrapper">
+      <div class="panel">
+        <div class="panel-inner">
+          <h1>chess-ai! // demo</h1>
+          <p class="subtitle">
+            Human vs random agent > ASCII board, AoC-inspired chrome.
+          </p>
 
-    <pre>{{ board_ascii }}</pre>
+          <div class="board-wrapper">
+            <pre class="board">{{ board_ascii }}</pre>
+          </div>
 
-    {% if message %}
-    <p>{{ message }}</p>
-    {% endif %}
+          {% if message %}
+          <div class="message {% if is_error %}error{% else %}info{% endif %}">
+            {{ message }}
+          </div>
+          {% endif %}
 
-    <form action="{{ url_for('make_move') }}" method="post">
-      <label for="move">Enter move (in UCI, e.g., e2e4, g1f3):</label><br>
-      <input type="text" id="move" name="move" autofocus>
-      <button type="submit">Submit</button>
-    </form>
+          <form class="move-form" action="{{ url_for('make_move') }}" method="post">
+            <div class="field-group">
+              <label for="move">Move (UCI notation)</label>
+              <input type="text" id="move" name="move" placeholder="e2e4, g1f3, a7a5" autofocus>
+            </div>
+            <div class="button-group">
+              <button type="submit">Submit move</button>
+            </div>
+          </form>
 
+          <p class="small-note">
+            Tip: Enter <code>q</code> to resign and start a new game.
+          </p>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
 """
@@ -65,7 +87,12 @@ def index():
     Show the current board and a simple move input form.
     """
     board_ascii = board_to_ascii(game)
-    return render_template_string(PAGE_TEMPLATE, board_ascii=board_ascii, message=None)
+    return render_template_string(
+        PAGE_TEMPLATE,
+        board_ascii=board_ascii,
+        message=None,
+        is_error=False,
+      )
 
 @app.post("/move")
 def make_move():
@@ -86,7 +113,12 @@ def make_move():
     if not move_str:
         msg = "Please enter a move."
         board_ascii = board_to_ascii(game)
-        return render_template_string(PAGE_TEMPLATE, board_ascii=board_ascii, message=msg)
+        return render_template_string(
+            PAGE_TEMPLATE,
+            board_ascii=board_ascii,
+            message=msg,
+            is_error=True,
+        )
 
     # 2. Resign / reset on 'q'
     if move_str.lower() == "q":
@@ -99,7 +131,12 @@ def make_move():
             game.move_history = []
 
         board_ascii = board_to_ascii(game)
-        return render_template_string(PAGE_TEMPLATE, board_ascii=board_ascii, message=msg)
+        return render_template_string(
+            PAGE_TEMPLATE,
+            board_ascii=board_ascii,
+            message=msg,
+            is_error=False,
+        )
 
     board = game.board
 
@@ -109,13 +146,23 @@ def make_move():
     except ValueError:
         msg = f"Invalid UCI move: {move_str}"
         board_ascii = board_to_ascii(game)
-        return render_template_string(PAGE_TEMPLATE, board_ascii=board_ascii, message=msg)
+        return render_template_string(
+            PAGE_TEMPLATE,
+            board_ascii=board_ascii,
+            message=msg,
+            is_error=True,
+        )
 
     # 4. Check legality
     if move not in board.legal_moves:
         msg = f"Illegal move: {move_str}"
         board_ascii = board_to_ascii(game)
-        return render_template_string(PAGE_TEMPLATE, board_ascii=board_ascii, message=msg)
+        return render_template_string(
+            PAGE_TEMPLATE,
+            board_ascii=board_ascii,
+            message=msg,
+            is_error=True,
+        )
 
     # 5. Apply human move
     board.push(move)
