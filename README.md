@@ -1,34 +1,49 @@
 # chess-ai
 
-A small research sandbox for building AI chess agents. Right now it provides a basic command line interface, human vs random AI play, game saving and replay. Neural net & search agents will come next.
+A small research sandbox for building AI chess agents. Currently features a clean CLI, human-vs-random AI play, game saving and replay. Neural net & search agents coming soon.
 
+---
 
-## Running the Game
+# User Guide
 
-First activate your virtual environment:
+## Running the Program
+
+If you haven't already, activate a virtual environment in your project root:
 
 `source .venv/Scripts/activate`
+`pip install -e .`
 
-To play **human** vs **random** run in the main project directory the following:
+And run:
 
-`pip insall -e .`
+`python -m chess_ai`
+
+You'll see a simple menu:
+`chess-ai menu:`
+`  1) Play human vs random`
+`  2) Replay a PGN file`
+`  q) Quit`
+
+## Playing a Game (Human vs Random)
+
+Choose 1 from the menu, or run directly:
 
 `python -m chess_ai play`
 
-You'll see an ASCII chessboard updated each time it is your turn. Example output is below:
+You'll see an ASCII rendered board, updated each time it is your turn, like below:
 
-|   |   |   |   |   |   |   |   |
-|---|---|---|---|---|---|---|---|
-| r | n | b | q | k | b | n | r |
-| p | p | p | p | p | p | p | p |
-| . | . | . | . | . | . | . | . |
-| . | . | . | . | . | . | . | . |
-| . | . | . | . | P | . | . | . |
-| . | . | . | . | . | . | . | . |
-| P | P | P | P | P | P | P | P |
-| R | N | B | Q | K | B | N | R |
++------------------------+
+  8 | r n b q k b n r |
+  7 | p p p p p p p p |
+  6 | . . . . . . . . |
+  5 | . . . . . . . . |
+  4 | . . . . P . . . |
+  3 | . . . . . . . . |
+  2 | P P P P . P P P |
+  1 | R N B Q K B N R |
+  +------------------------+
+    a b c d e f g h
 
-**Legend**: White = uppercase, Black = lowercase.
+The board is displayed with ranks, files, borders, the side-to-move and the last-move-played. **Legend**: White = uppercase, Black = lowercase.
 
 Enter your moves in **UCI format**, such as:
 
@@ -43,15 +58,21 @@ And to resign, enter `q`.
 
 ## Saving the Game
 
-Every completed game is saved automatically in:
+You may choose whether the game is saved:
+
+`python -m chess_ai play --save`
+
+Or from the menu, you'll be prompted:
+
+`Save game when finished? [y/N]:`
+
+And saved games go into:
 
 `games/`
 
-With file naming following the convention:
+Each file is a standard PGN, with naming convention following:
 
 `YYYYMMDD_HHMMSS_game.pgn`
-
-These are standard PGN files compatible with any (universal) chess software.
 
 
 ## Replaying a Game
@@ -60,11 +81,9 @@ To replay a saved PGN:
 
 `python -m chess_ai replay path/to/game.pgn`
 
-Press **Enter** to advance one move at a time.  
-Again, press **q** during to exit early.
+Press **Enter** to advance one move at a time and press **q** to exit early. The board will update after each move.
 
-You'll see the board update after each move.
-
+--- 
 
 # DEV UPDATE LOG
 
@@ -79,3 +98,7 @@ Implemented automatic PGN saving and step-by-step PGN replay.
 
 ### 3. CLI entrypoint + cleanup
 Added `__main__.py` for simple commands (`python -m chess_ai`), simplified dispatch, and tightened tests.
+
+### 4. TODO
+ * Web Interface
+ * AI components
