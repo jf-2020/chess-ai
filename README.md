@@ -5,7 +5,13 @@ A small research sandbox for building AI chess agents. Right now it provides a b
 
 ## Running the Game
 
-First activate your virtual environment. Then, to play **human** vs **random**, run:
+First activate your virtual environment:
+
+`source .venv/Scripts/activate`
+
+To play **human** vs **random** run in the main project directory the following:
+
+`pip insall -e .`
 
 `python -m chess_ai play`
 
@@ -55,7 +61,7 @@ To replay a saved PGN:
 `python -m chess_ai replay path/to/game.pgn`
 
 Press **Enter** to advance one move at a time.  
-Press **q** during replay to exit early.
+Again, press **q** during to exit early.
 
 You'll see the board update after each move.
 
