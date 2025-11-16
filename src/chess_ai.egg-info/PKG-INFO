@@ -1,8 +1,0 @@
-Metadata-Version: 2.4
-Name: chess-ai
-Version: 0.0.1
-Summary: Research sandbox for chess-playing AI agents.
-Requires-Python: >=3.11
-Requires-Dist: python-chess
-Provides-Extra: dev
-Requires-Dist: pytest; extra == "dev"

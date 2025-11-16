@@ -1,4 +1,0 @@
-python-chess
-
-[dev]
-pytest

@@ -145,17 +145,26 @@ def replay_game_from_pgn(path: str | Path) -> None:
 
     print("End of game.")
 
-def main():
+def main() -> None:
     """
     CLI for chess-ai.
-    
+
     Usage:
-        python -m chess_ai play [--save]  # play a human vs random AI
-        python -m chess_ai replay PATH    # replay a saved PGN game
-    
-    If run with no arguments, shows a simple interactive menu.
+        python -m chess_ai          # menu
+        python -m chess_ai play [--save]
+        python -m chess_ai replay PATH_TO_PGN
     """
-    args = sys.argv[1:]
+    raw_args = sys.argv[1:]
+
+    # Normalize for `python -m chess_ai ...`
+    # Example sys.argv:
+    #   ["python", "-m", "chess_ai"]                -> args = []
+    #   ["python", "-m", "chess_ai", "play"]        -> args = ["play"]
+    #   ["python", "-m", "chess_ai", "replay", ...] -> args = ["replay", ...]
+    if len(raw_args) >= 2 and raw_args[0] == "-m" and raw_args[1] == "chess_ai":
+        args = raw_args[2:]
+    else:
+        args = raw_args
 
     # No args -> interactive menu
     if len(args) == 0:
@@ -175,8 +184,7 @@ def main():
         else:
             print("Goodbye.")
         return
-    
-    # Sumcommand mode
+
     cmd = args[0]
 
     if cmd == "play":
@@ -196,5 +204,5 @@ def main():
         replay_game_from_pgn(args[1])
 
     else:
-        print(f"Uknown command: {cmd}")
+        print(f"Unknown command: {cmd}")
         print("Valid commands: play, replay")
