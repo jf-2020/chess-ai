@@ -40,5 +40,5 @@ While the goal of the project is the chess AI, it's also an attempt to complete 
 - Implement CLI interaction:
   - ASCII board rendering
   - `HumanPlayer` input parsing (UCI)
-  - a runnable `humand vs random` command
-- After that: state enconding & initial neural network model
+  - a runnable `human vs random` command
+- After that: state encoding & initial neural network model

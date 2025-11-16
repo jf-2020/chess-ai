@@ -1,5 +1,4 @@
 import chess
-from typing import Optional
 from .player import Player
 
 class ChessGame:
@@ -41,13 +40,13 @@ class GameSession:
     def __init__(
         self, white_player: Player,
         black_player: Player,
-        game: Optional[ChessGame] = None,
-    ):
+        game: ChessGame | None = None
+    ) -> None:
         self.game = game or ChessGame()
         self.white_player = white_player
         self.black_player = black_player
 
-    def current_player(self):
+    def current_player(self) -> Player:
         """
         Determine whose turn it is based on the python-chess board:
         - True  -> White
@@ -55,7 +54,7 @@ class GameSession:
         """
         return self.white_player if self.game.board.turn else self.black_player
     
-    def run(self):
+    def run(self) -> str:
         """
         Run a complete game until termination.
         
