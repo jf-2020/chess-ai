@@ -122,28 +122,32 @@ def replay_game_from_pgn(path: str | Path) -> None:
 
 def main():
     """
-    Simple CLI entrypoint.
+    CLI for chess-ai.
     
     Usage:
-        python -m chess_ai.cli.app              # play human vs random
-        python -m chess_ai.cli.app play         # same as above
-        python -m chess_ai.cli.app replay PATH  # replay a PGN game
+        python -m chess_ai play         # play a human vs random AI
+        python -m chess_ai replay PATH  # replay a saved PGN game
     """
     args = sys.argv[1:]
 
-    if not args or args[0] == "play":
+    if len(args) == 0:
+        print("Usage:")
+        print("  python -m chess_ai play")
+        print("  python -m chess_ai replay PATH_TO_PGN")
+        return
+
+    cmd = args[0]
+
+    if cmd == "play":
         play_human_vs_random()
-    elif args[0] == "replay":
+    elif cmd == "replay":
         if len(args) < 2:
-            print("Usage: python -m chess_ai.cli.app replay PATH_TO_PGN")
+            print("Error: replay requires a path to a PGN file.")
             return
         replay_game_from_pgn(args[1])
     else:
-        print("Unknown command.")
-        print("Usage:")
-        print("    python -m chess_ai.cli.app              # play human vs random")
-        print("    python -m chess_ai.cli.app play         # play human vs random")
-        print("    python -m chess_ai.cli.app replay PATH  # replay a PGN game")
+        print(f"Unknown command: {cmd}")
+        print("Valid commands: play, replay")
 
 if __name__ == "__main__":
     main()
