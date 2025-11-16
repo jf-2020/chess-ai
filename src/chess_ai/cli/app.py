@@ -45,7 +45,7 @@ def render_board(game: ChessGame) -> None:
     print()
     print("  +------------------------+")
     for r in ranks:
-        row_piecs = []
+        row_pieces = []
         for f in range(8):
             square = chess.square(f, r)
             piece = board.piece_at(square)
