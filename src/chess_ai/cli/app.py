@@ -34,16 +34,18 @@ class HumanPlayer(Player):
             else:
                 print("Illegal move in this position. Try again.")
 
-def render_board(game: ChessGame) -> None:
-    # ASCII board printing
+def board_to_ascii(game: ChessGame) -> str:
+    """Convert the current board to a browser appropriate str representation."""
     board = game.board
     files = "abcdefgh"
-    ranks = range(7, -1, -1) # 7 -> 0 = ranks 8 -> 1
+    ranks = range(7, -1, -1) # 7 -> 0 => ranks 8 -> 1
 
     last_move = board.move_stack[-1] if board.move_stack else None
 
-    print()
-    print("  +------------------------+")
+    lines: list[str] = []
+
+    lines.append("")
+    lines.append("  +------------------------+")
     for r in ranks:
         row_pieces = []
         for f in range(8):
@@ -52,16 +54,22 @@ def render_board(game: ChessGame) -> None:
             symbol = piece.symbol() if piece else "."
             row_pieces.append(symbol)
         rank_label = r + 1
-        print(f"  {rank_label} | {' '.join(row_pieces)} |")
-    print("  +------------------------+")
-    print("    " + " ".join(files))
-    print()
+        lines.append(f"  {rank_label} | {' '.join(row_pieces)} |")
+    lines.append("  +------------------------+")
+    lines.append("    " + " ".join(files))
+    lines.append("")
 
     side = "White" if board.turn else "Black"
-    print(f"Side to move: {side}")
+    lines.append(f"Side to move: {side}")
     if last_move is not None:
-        print(f"Last move: {last_move.uci()}")
-    print()
+        lines.append(f"Last move: {last_move.uci()}")
+    lines.append("")
+
+    return "\n".join(lines)
+
+def render_board(game: ChessGame) -> None:
+    # ASCII board printing
+    print(board_to_ascii(game))
 
 def save_game_to_pgn(game: ChessGame, directory: str | Path = "games") -> Path:
     """
