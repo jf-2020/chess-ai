@@ -36,7 +36,31 @@ class HumanPlayer(Player):
 
 def render_board(game: ChessGame) -> None:
     # ASCII board printing
-    print(game.board)
+    board = game.board
+    files = "abcdefgh"
+    ranks = range(7, -1, -1) # 7 -> 0 = ranks 8 -> 1
+
+    last_move = board.move_stack[-1] if board.move_stack else None
+
+    print()
+    print("  +------------------------+")
+    for r in ranks:
+        row_piecs = []
+        for f in range(8):
+            square = chess.square(f, r)
+            piece = board.piece_at(square)
+            symbol = piece.symbol() if piece else "."
+            row_pieces.append(symbol)
+        rank_label = r + 1
+        print(f"  {rank_label} | {' '.join(row_pieces)} |")
+    print("  +------------------------+")
+    print("    " + " ".join(files))
+    print()
+
+    side = "White" if board.turn else "Black"
+    print(f"Side to move: {side}")
+    if last_move is not None:
+        print(f"Last move: {last_move.uci()}")
     print()
 
 def save_game_to_pgn(game: ChessGame, directory: str | Path = "games") -> Path:
@@ -64,18 +88,19 @@ def save_game_to_pgn(game: ChessGame, directory: str | Path = "games") -> Path:
 
     return path
 
-def play_human_vs_random():
+def play_human_vs_random(save_game: bool = False) -> None:
     game = ChessGame()
     human = HumanPlayer()
     ai = RandomAgent()
 
-    session = GameSession(white_player=human, black_player=ai)
+    session = GameSession(white_player=human, black_player=ai, game=game)
     session.run()
     print("Game over:", game.result())
 
-    # Save PGN
-    pgn_path = save_game_to_pgn(game)
-    print(f"Saved game to {pgn_path}")
+    if save_game:
+        # Save PGN
+        pgn_path = save_game_to_pgn(game)
+        print(f"Saved game to {pgn_path}")
 
 def replay_game_from_pgn(path: str | Path) -> None:
     """
@@ -125,26 +150,51 @@ def main():
     CLI for chess-ai.
     
     Usage:
-        python -m chess_ai play         # play a human vs random AI
-        python -m chess_ai replay PATH  # replay a saved PGN game
+        python -m chess_ai play [--save]  # play a human vs random AI
+        python -m chess_ai replay PATH    # replay a saved PGN game
+    
+    If run with no arguments, shows a simple interactive menu.
     """
     args = sys.argv[1:]
 
+    # No args -> interactive menu
     if len(args) == 0:
-        print("Usage:")
-        print("  python -m chess_ai play")
-        print("  python -m chess_ai replay PATH_TO_PGN")
-        return
+        print("chess-ai menu:")
+        print("  1) Play human vs random")
+        print("  2) Replay a PGN file")
+        print("  q) Quit")
+        choice = input("> ").strip().lower()
 
+        if choice == "1":
+            save_answer = input("Save game when finished? [y/N]: ").strip().lower()
+            save = save_answer == "y"
+            play_human_vs_random(save_game=save)
+        elif choice == "2":
+            path = input("Path to PGN file: ").strip()
+            replay_game_from_pgn(path)
+        else:
+            print("Goodbye.")
+        return
+    
+    # Sumcommand mode
     cmd = args[0]
 
     if cmd == "play":
-        play_human_vs_random()
+        save = False
+        if len(args) > 1:
+            if args[1] == "--save":
+                save = True
+            else:
+                print("Usage: python -m chess_ai play [--save]")
+                return
+        play_human_vs_random(save_game=save)
+
     elif cmd == "replay":
         if len(args) < 2:
-            print("Error: replay requires a path to a PGN file.")
+            print("Usage: python -m chess_ai replay PATH_TO_PGN")
             return
         replay_game_from_pgn(args[1])
+
     else:
-        print(f"Unknown command: {cmd}")
+        print(f"Uknown command: {cmd}")
         print("Valid commands: play, replay")
