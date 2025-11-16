@@ -148,6 +148,3 @@ def main():
     else:
         print(f"Unknown command: {cmd}")
         print("Valid commands: play, replay")
-
-if __name__ == "__main__":
-    main()
