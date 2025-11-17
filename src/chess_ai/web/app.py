@@ -33,7 +33,11 @@ from chess_ai.cli.app import board_to_ascii
 # Global app + single game/agent (for now). Later on, we'll replace this
 # with per-session game state.
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    static_folder="static",        # relative to this file's package dir (chess_ai/web)
+    static_url_path="/static",     # URL prefix
+)
 
 # Secret key for sessions (override in production via env var)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key-change-me")
