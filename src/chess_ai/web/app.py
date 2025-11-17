@@ -15,6 +15,8 @@ import os
 import uuid
 
 import chess
+import chess.pgn
+
 from flask import (
     Flask,
     request,
@@ -58,6 +60,38 @@ def get_or_create_game() -> ChessGame:
         games[game_id] = ChessGame()
     return games[game_id]
 
+def game_to_pgn(game: ChessGame) -> str:
+    """
+    Convert the current game position (move stack) into a PGN string.
+
+    Uses python-chess PGN helpers and the underlying board's move stack.
+    """
+    board = game.board
+
+    game_pgn = chess.pgn.Game()
+
+    # Basic headers (you can expand later)
+    game_pgn.headers["Event"] = "chess-ai web app"
+    game_pgn.headers["Site"] = "Local"
+    # "*" for unfinished games, otherwise the actual result, e.g. "1-0"
+    game_pgn.headers["Result"] = board.result() if board.is_game_over() else "*"
+
+    node = game_pgn
+    for move in board.move_stack:
+        node = node.add_variation(move)
+
+    exporter = chess.pgn.StringExporter(
+        headers=True,
+        variations=False,
+        comments=False,
+    )
+    pgn_str = game_pgn.accept(exporter)
+    return pgn_str
+
+#############
+# TEMPLATES #
+#############
+
 PAGE_TEMPLATE = """
 <!doctype html>
 <html>
@@ -99,6 +133,12 @@ PAGE_TEMPLATE = """
           <p class="small-note">
             Tip: Enter <code>q</code> to resign and start a new game.
           </p>
+
+          <p class="small-note">
+            <a href="{{ url_for('show_pgn') }}" style="color: #9effa8; text-decoration: none;">
+              View current game as PGN
+            </a>
+          </p>
         </div>
       </div>
     </div>
@@ -106,9 +146,45 @@ PAGE_TEMPLATE = """
 </html>
 """
 
-##########
-# ROUTES #
-##########
+PGN_TEMPLATE = """
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>chess-ai // PGN export</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="panel">
+        <div class="panel-inner">
+          <h1>chess-ai // PGN export</h1>
+          <p class="subtitle">
+            Current game as PGN. Copy and save locally as needed.
+          </p>
+
+          <textarea
+            readonly
+            rows="14"
+            class="pgn-textarea"
+          >{{ pgn_text }}</textarea>
+
+          <p class="small-note">
+            Result: {{ result }}
+          </p>
+
+          <p class="small-note">
+            <a href="{{ url_for('index') }}" style="color: #9effa8; text-decoration: none;">
+              &larr; Back to game
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+"""
 
 ######################
 # ACCESS KEY GATING  #
@@ -161,6 +237,10 @@ ACCESS_TEMPLATE = """
   </body>
 </html>
 """
+
+##########
+# ROUTES #
+##########
 
 @app.get("/access")
 def access():
@@ -301,6 +381,26 @@ def make_move():
 
     # 7. Redirect back to main page (Post/Redirect/Get pattern)
     return redirect(url_for("index"))
+
+@app.get("/pgn")
+def show_pgn():
+    """
+    Show the current session's game as PGN inside a textarea.
+    Respects the access gate and per-session game state.
+    """
+    if ACCESS_KEY and not session.get("access_granted"):
+        return redirect(url_for("access"))
+
+    game = get_or_create_game()
+    pgn_text = game_to_pgn(game)
+    board = game.board
+    result = board.result() if board.is_game_over() else "*"
+
+    return render_template_string(
+        PGN_TEMPLATE,
+        pgn_text=pgn_text,
+        result=result,
+    )
 
 ####################
 # Local Entrypoint #

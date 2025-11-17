@@ -222,3 +222,19 @@ button:active {
         justify-content: flex-start;
     }
 }
+
+textarea.pgn-textarea {
+  width: 100%;
+  background-color: var(--bg-board);
+  color: var(--text-main);
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  padding: 0.7rem 0.9rem;
+  font-family: "SF Mono", "Consolas", "Menlo", "Courier New", monospace;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  resize: vertical;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.6),
+    0 12px 25px rgba(0, 0, 0, 0.8);
+}
