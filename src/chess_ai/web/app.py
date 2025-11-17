@@ -12,9 +12,17 @@ Initial Goals:
 from __future__ import annotations
 
 import os
+import uuid
 
 import chess
-from flask import Flask, request, render_template_string, redirect, url_for
+from flask import (
+    Flask,
+    request,
+    render_template_string,
+    redirect,
+    url_for,
+    session,
+)
 
 from chess_ai.core.game import ChessGame
 from chess_ai.agents.random_agent import RandomAgent
@@ -25,9 +33,30 @@ from chess_ai.cli.app import board_to_ascii
 
 app = Flask(__name__)
 
-# Again, single global game and agent for now
-game = ChessGame()
+# Secret key for sessions (override in production via env var)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key-change-me")
+
+##########################
+# Per-session game store #
+##########################
+
+# In-memory mapping: session "game_id" -> ChessGame instance
+games: dict[str, ChessGame] = {}
+
+# Random agent can stay global (stateless)
 ai = RandomAgent()
+
+def get_or_create_game() -> ChessGame:
+    """
+    Look up the ChessGame for the current user session.
+    If none exists yet, create one and remember its ID on the session.
+    """
+    game_id = session.get("game_id")
+    if game_id is None or game_id not in games:
+        game_id = str(uuid.uuid4())
+        session["game_id"] = game_id
+        games[game_id] = ChessGame()
+    return games[game_id]
 
 PAGE_TEMPLATE = """
 <!doctype html>
@@ -81,18 +110,113 @@ PAGE_TEMPLATE = """
 # ROUTES #
 ##########
 
+######################
+# ACCESS KEY GATING  #
+######################
+
+ACCESS_KEY = os.environ.get("ACCESS_KEY")  # set this in Render later
+
+ACCESS_TEMPLATE = """
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>chess-ai // access</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% if css_href %}
+    <link rel="stylesheet" href="{{ css_href }}">
+    {% endif %}
+  </head>
+  <body>
+    <div class="wrapper">
+      <div class="panel">
+        <div class="panel-inner">
+          <h1>chess-ai // access</h1>
+          <p class="subtitle">
+            This app is gated by a shared access key.
+          </p>
+
+          {% if message %}
+          <div class="message error">
+            {{ message }}
+          </div>
+          {% endif %}
+
+          <form class="move-form" action="{{ url_for('access') }}" method="post">
+            <div class="field-group">
+              <label for="access_key">Access key</label>
+              <input type="text" id="access_key" name="access_key" placeholder="enter access key">
+            </div>
+            <div class="button-group">
+              <button type="submit">Enter</button>
+            </div>
+          </form>
+
+          <p class="small-note">
+            If you don't have the access key, contact the project owner.
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
+"""
+
+@app.get("/access")
+def access():
+    """
+    Simple access-key form. If ACCESS_KEY is unset, we just auto-grant access.
+    """
+    # If no access key is configured, don't gate anything.
+    if not ACCESS_KEY:
+        session["access_granted"] = True
+        return redirect(url_for("index"))
+
+    css_href = url_for("static", filename="css/style.css")
+    return render_template_string(
+        ACCESS_TEMPLATE,
+        message=None,
+        css_href=css_href,
+    )
+
+@app.post("/access")
+def access_post():
+    """
+    Handle access-key submission.
+    """
+    # If access key isn't configured, just skip gating.
+    if not ACCESS_KEY:
+        session["access_granted"] = True
+        return redirect(url_for("index"))
+
+    submitted = (request.form.get("access_key") or "").strip()
+
+    if submitted == ACCESS_KEY:
+        session["access_granted"] = True
+        return redirect(url_for("index"))
+
+    css_href = url_for("static", filename="css/style.css")
+    return render_template_string(
+        ACCESS_TEMPLATE,
+        message="Invalid access key.",
+        css_href=css_href,
+    )
+
 @app.get("/")
 def index():
-    """
-    Show the current board and a simple move input form.
-    """
+    # Access-gate check
+    if ACCESS_KEY and not session.get("access_granted"):
+        return redirect(url_for("access"))
+
+    game = get_or_create_game()
     board_ascii = board_to_ascii(game)
+
     return render_template_string(
         PAGE_TEMPLATE,
         board_ascii=board_ascii,
         message=None,
         is_error=False,
-      )
+    )
 
 @app.post("/move")
 def make_move():
@@ -107,6 +231,13 @@ def make_move():
     - Legal move  -> apply human move, then let AI respond (if game not over),
                     then redirect back to index.
     """
+    # Access-gate check
+    if ACCESS_KEY and not session.get("access_granted"):
+        return redirect(url_for("access"))
+
+    game = get_or_create_game()
+    board = game.board
+
     move_str = (request.form.get("move") or "").strip()
 
     # 1. No input
@@ -123,10 +254,7 @@ def make_move():
     # 2. Resign / reset on 'q'
     if move_str.lower() == "q":
         msg = "You resigned. Starting a new game."
-        # Reset the existing game object in-place instead of reassigning the global.
-        game.board.reset()
-        # For a later time, note that here would be a good place to store extra
-        # state (e.g. move history).
+        board.reset()
         if hasattr(game, "move_history"):
             game.move_history = []
 
@@ -137,8 +265,6 @@ def make_move():
             message=msg,
             is_error=False,
         )
-
-    board = game.board
 
     # 3. Parse UCI move
     try:
@@ -173,7 +299,7 @@ def make_move():
         if ai_move is not None:
             board.push(ai_move)
 
-    # 7. Redirect back to main page
+    # 7. Redirect back to main page (Post/Redirect/Get pattern)
     return redirect(url_for("index"))
 
 ####################
