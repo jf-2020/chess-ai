@@ -8,6 +8,7 @@ import chess.pgn
 from chess_ai.core.game import ChessGame, GameSession
 from chess_ai.core.player import Player
 from chess_ai.agents.random_agent import RandomAgent
+from chess_ai.agents.registry import get_agent
 
 class HumanPlayer(Player):
     def choose_move(self, game: ChessGame):
@@ -96,19 +97,30 @@ def save_game_to_pgn(game: ChessGame, directory: str | Path = "games") -> Path:
 
     return path
 
-def play_human_vs_random(save_game: bool = False) -> None:
+def play_human_vs_agent(agent_name: str = "random", save_game: bool = False) -> None:
+    """
+    Play a human vs the specified agent by name.
+
+    agent_name should be a key registered in chess_ai.agents.registry.AGENTS,
+    e.g. "random" or "minimax".
+    """
     game = ChessGame()
     human = HumanPlayer()
-    ai = RandomAgent()
+    ai = get_agent(agent_name)
 
     session = GameSession(white_player=human, black_player=ai, game=game)
     session.run()
     print("Game over:", game.result())
 
     if save_game:
-        # Save PGN
         pgn_path = save_game_to_pgn(game)
         print(f"Saved game to {pgn_path}")
+
+def play_human_vs_random(save_game: bool = False) -> None:
+    """
+    Backwards-compatible wrapper that always selects the random agent.
+    """
+    play_human_vs_agent(agent_name="random", save_game=save_game)
 
 def replay_game_from_pgn(path: str | Path) -> None:
     """
@@ -177,7 +189,7 @@ def main() -> None:
     # No args -> interactive menu
     if len(args) == 0:
         print("chess-ai menu:")
-        print("  1) Play human vs random")
+        print("  1) Play human vs AI (random or minimax)")
         print("  2) Replay a PGN file")
         print("  q) Quit")
         choice = input("> ").strip().lower()
@@ -185,7 +197,17 @@ def main() -> None:
         if choice == "1":
             save_answer = input("Save game when finished? [y/N]: ").strip().lower()
             save = save_answer == "y"
-            play_human_vs_random(save_game=save)
+
+            agent_choice = input(
+                "Choose AI: [r]andom or [m]inimax (default: minimax): "
+            ).strip().lower()
+
+            if agent_choice == "r":
+                agent_name = "random"
+            else:
+                agent_name = "minimax"
+
+            play_human_vs_agent(agent_name=agent_name, save_game=save)
         elif choice == "2":
             path = input("Path to PGN file: ").strip()
             replay_game_from_pgn(path)
@@ -197,13 +219,25 @@ def main() -> None:
 
     if cmd == "play":
         save = False
-        if len(args) > 1:
-            if args[1] == "--save":
+        agent_name = "random"
+
+        # Very simple arg parsing:
+        #   python -m chess_ai play [--save] [--agent NAME]
+        extra_args = args[1:]
+        i = 0
+        while i < len(extra_args):
+            token = extra_args[i]
+            if token == "--save":
                 save = True
+            elif token == "--agent" and i + 1 < len(extra_args):
+                agent_name = extra_args[i + 1]
+                i += 1  # skip the name we just consumed
             else:
-                print("Usage: python -m chess_ai play [--save]")
+                print("Usage: python -m chess_ai play [--save] [--agent NAME]")
                 return
-        play_human_vs_random(save_game=save)
+            i += 1
+
+        play_human_vs_agent(agent_name=agent_name, save_game=save)
 
     elif cmd == "replay":
         if len(args) < 2:

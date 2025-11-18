@@ -15,15 +15,15 @@ agents trivial.
 """
 
 from .random_agent import RandomAgent
+from .minimax_agent import MinimaxAgent
 # Later:
 # from .greedy_agent import GreedyAgent
-# from .minimax_agent import MinimaxAgent
 # from .mcts_agent import MonteCarloTreeSearchAgent
 
 AGENTS = {
     "random": RandomAgent,
+    "minimax": MinimaxAgent,
     # "greedy": GreedyAgent,
-    # "minimax": MinimaxAgent,
     # "mcts": MonteCarloTreeSearchAgent,
 }
 

@@ -27,7 +27,7 @@ from flask import (
 )
 
 from chess_ai.core.game import ChessGame
-from chess_ai.agents.random_agent import RandomAgent
+from chess_ai.agents.registry import get_agent
 from chess_ai.cli.app import board_to_ascii
 
 # Global app + single game/agent (for now). Later on, we'll replace this
@@ -49,8 +49,17 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key-change-me")
 # In-memory mapping: session "game_id" -> ChessGame instance
 games: dict[str, ChessGame] = {}
 
-# Random agent can stay global (stateless)
-ai = RandomAgent()
+# Choose which agent to use via env var.
+# Defaults to "random" so the app works even if MinimaxAgent is not wired yet.
+AGENT_NAME = os.environ.get("CHESS_AI_AGENT", "random")
+
+# You can pass kwargs for certain agents if you like, e.g. for minimax:
+AGENT_KWARGS: dict[str, object] = {}
+if AGENT_NAME == "minimax":
+    # Adjust depth, pruning, etc. as you wish
+    AGENT_KWARGS = {"depth": 2, "use_alpha_beta": True, "use_quiescence": False}
+
+ai = get_agent(AGENT_NAME, **AGENT_KWARGS)
 
 def get_or_create_game() -> ChessGame:
     """
